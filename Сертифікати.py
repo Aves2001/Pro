@@ -15,6 +15,53 @@ c.execute('''CREATE TABLE IF NOT EXISTS certificates
              (protocol_number TEXT, date TEXT, company TEXT, car_number TEXT, note TEXT)''')
 conn.commit()
 
+def copy_text(event=None):
+    try:
+        focused_widget = root.focus_get()
+        if isinstance(focused_widget, tk.Text) or isinstance(focused_widget, tk.Entry):
+            selected_text = focused_widget.selection_get()
+            root.clipboard_clear()
+            root.clipboard_append(selected_text)
+    except tk.TclError:
+        pass
+
+def cut_text(event=None):
+    try:
+        focused_widget = root.focus_get()
+        if isinstance(focused_widget, tk.Text) or isinstance(focused_widget, tk.Entry):
+            selected_text = focused_widget.selection_get()
+            root.clipboard_clear()
+            root.clipboard_append(selected_text)
+            focused_widget.delete(tk.SEL_FIRST, tk.SEL_LAST)
+    except tk.TclError:
+        pass
+
+def paste_text(event=None):
+    try:
+        focused_widget = root.focus_get()
+        if isinstance(focused_widget, tk.Text) or isinstance(focused_widget, tk.Entry):
+            clipboard_text = root.clipboard_get()
+            focused_widget.insert(tk.INSERT, clipboard_text)
+    except tk.TclError:
+        pass
+
+def select_all(event=None):
+    focused_widget = root.focus_get()
+    if isinstance(focused_widget, tk.Text):
+        focused_widget.tag_add("sel", "1.0", "end-1c")
+    elif isinstance(focused_widget, tk.Entry):
+        focused_widget.select_range(0, tk.END)
+    return "break"
+
+def undo_action(event=None):
+    focused_widget = root.focus_get()
+    if isinstance(focused_widget, tk.Text) or isinstance(focused_widget, tk.Entry):
+        try:
+            focused_widget.edit_undo()
+        except tk.TclError:
+            pass
+
+
 # Функція для додавання сертифікату
 def add_certificate():
     global protocol_entry, date_entry, company_entry, car_entry, note_text, msto_var, payment_var
@@ -1532,6 +1579,22 @@ all_records_frame.place(x=root.winfo_screenwidth() * 0.7, y=130, width=root.winf
 # Функціонал закриття вікна
 root.protocol("WM_DELETE_WINDOW", close_app)
 root.bind("<Escape>", close_app)
+
+# Прив'язка гарячих клавіш з використанням keycode
+root.bind("<Control-KeyPress>", lambda e: handle_key_press(e))
+
+def handle_key_press(event):
+    keycode = event.keycode  # Код фізичної клавіші
+    if keycode == 86:  # V (вставка)
+        paste_text()
+    elif keycode == 67:  # C (копіювання)
+        copy_text()
+    elif keycode == 88:  # X (вирізання)
+        cut_text()
+    elif keycode == 65:  # A (вибрати все)
+        select_all()
+    elif keycode == 90:  # Z (відміна дії)
+        undo_action()
 
 # Зв'язування події натискання клавіші "Enter" з функцією пошуку
 search_entry.bind("<KeyRelease>", search)
